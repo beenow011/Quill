@@ -9,14 +9,16 @@ const Page = async () => {
     const origin = searchParams.get('origin')
 
 
-    trpc.authCallback.useQuery(undefined, {
-        onSuccess: ({ data }) => {
-            const { success } = data;
-            if (success) {
-                router.push(origin ? `/${origin}` : '/dashboard');
-            }
-        },
+
+    const { data, isSuccess } = trpc.authCallback.useQuery(undefined, {
+
     });
+    if (isSuccess) {
+
+
+        router.push(origin ? `/${origin}` : '/dashboard');
+
+    }
 
 }
 
