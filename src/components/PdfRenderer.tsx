@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp, Loader2, Search } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, RotateCw, Search } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -28,6 +28,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     const [numPages, setNumPages] = useState<number>()
     const [currPage, setCurrPage] = useState(1)
     const [scale, setScale] = useState(1)
+    const [rotation, setRotation] = useState(0)
     const { toast } = useToast();
     const { width, ref } = useResizeDetector()
 
@@ -103,6 +104,10 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <Button variant='ghost' onClick={() => setRotation(prev => prev + 90)} aria-label='rotate 90 degree'>
+                    <RotateCw className='h-4 w-4' />
+                </Button>
+
             </div>
         </div>
         <div className="flex-1 w-full max-h-screen ">
@@ -124,7 +129,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                             setNumPages(numPages)
                         }}
                         file={url} className='max-h-full'>
-                        <Page pageNumber={currPage} scale={scale} width={width ? width : 1} />
+                        <Page pageNumber={currPage} scale={scale} width={width ? width : 1} rotate={rotation} />
 
                     </Document>
                 </div>
