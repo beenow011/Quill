@@ -29,7 +29,9 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     const [numPages, setNumPages] = useState<number>()
     const [currPage, setCurrPage] = useState(1)
     const [scale, setScale] = useState(1)
+    const [renderedScale, setRednderedScale] = useState<number | null>(null)
     const [rotation, setRotation] = useState(0)
+    const isLoading = renderedScale !== scale
     const { toast } = useToast();
     const { width, ref } = useResizeDetector()
 
@@ -130,7 +132,31 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                             setNumPages(numPages)
                         }}
                         file={url} className='max-h-full'>
-                        <Page pageNumber={currPage} scale={scale} width={width ? width : 1} rotate={rotation} />
+                        {
+                            isLoading && renderedScale ?
+                                < Page
+                                    pageNumber={currPage}
+                                    scale={scale}
+                                    width={width ? width : 1}
+                                    rotate={rotation}
+                                    key={"@" + renderedScale}
+                                /> : null
+                        }
+
+                        < Page
+                            className={cn(isLoading ? 'hidden' : '')}
+                            pageNumber={currPage}
+                            scale={scale}
+                            width={width ? width : 1}
+                            rotate={rotation}
+                            key={'@' + scale}
+                            loading={
+                                <div className="flex justify-center">
+                                    <Loader2 className='my-24 h-6 w-6 animate-spin' />
+                                </div>
+                            }
+                            onRenderSuccess={() => setRednderedScale(scale)}
+                        />
 
                     </Document>
                 </div>
