@@ -4,8 +4,9 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import {PDFLoader} from 'langchain/document_loaders/fs/pdf'
 import { getPineconeClient } from '@/lib/pinecone'
-import {OpenAIEmbeddings} from 'langchain/embeddings/openai'
-import {PineconeStore} from 'langchain/vectorstores/pinecone'
+import {OpenAIEmbeddings} from '@langchain/openai'
+import {PineconeStore} from '@langchain/pinecone'
+import { HuggingFaceInferenceEmbeddings } from "@langchain/community/embeddings/hf";
 
 const f = createUploadthing();
  
@@ -41,17 +42,27 @@ export const ourFileRouter = {
 
         const pageLevelDocs = await loader.load()
         const pagesAmt = pageLevelDocs.length
-        console.log(1)
-    const pinecone = await getPineconeClient()
-    console.log(2)
-
-        const pineconeIndex = pinecone.Index("quill")
-        const embeddings = new OpenAIEmbeddings({
-          openAIApiKey: process.env.OPENAI_API_KEY
-        })
-        console.log(3)
-
-        await PineconeStore.fromDocuments(pageLevelDocs,embeddings ,{ pineconeIndex , namespace:""})
+        // console.log(1)
+        const pinecone = await getPineconeClient();
+        const pineconeIndex = pinecone.Index('quill'); // Use a single index name
+    
+        // Add a 'dataset' field to the data to distinguish the source
+        const combinedData = pageLevelDocs.map((document) => {
+          return {
+            ...document,
+            metadata: {
+              fileId: createdFile.id,
+            },
+            dataset: 'pdf', // Use a field to indicate the source dataset (e.g., 'pdf')
+          };
+        });
+        
+        const embeddings = new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
+    
+        await PineconeStore.fromDocuments(combinedData, embeddings, {
+          //@ts-ignore
+          pineconeIndex,
+        });
 
         await db.file.update({
           data:{
@@ -63,6 +74,7 @@ export const ourFileRouter = {
         })
 
       }catch(err){
+        console.log(err)
         await db.file.update({
           data:{
             uploadStatus:"FAILED"
