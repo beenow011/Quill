@@ -21,12 +21,14 @@ interface Props {
     children: ReactNode
 }
 
+
 export const ChatContextProvider = ({ fileId, children }: Props) => {
     const [message, setmessage] = useState('')
     const [isLoading, setIsloading] = useState(false)
     const { toast } = useToast();
     const { mutate: sendMessage } = useMutation({
         mutationFn: async ({ message }: { message: string }) => {
+            console.log("1", message)
             const response = await fetch('/api/message', {
                 method: 'POST',
                 body: JSON.stringify({

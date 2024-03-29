@@ -32,6 +32,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     const { fileId, message } = SendMessageValidator.parse(body)
+    console.log("2", message)
 
     const file = await db.file.findFirst({
         where: {
