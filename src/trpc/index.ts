@@ -132,28 +132,41 @@ export const appRouter = router({
       nextCursor
     }
   }),
-  createStripeSession : privateProcedure.mutation(async({ctx})=>{
-    const {userId} = ctx
-    const billingUrl = absoluteUrl('/dashboard/billing')
-    if(!userId) throw new TRPCError({code:'UNAUTHORIZED'})
+  createStripeSession: privateProcedure.mutation(
+    async ({ ctx }) => {
+      const { userId } = ctx
 
-    const dbUser = await db.user.findFirst({
-      where:{
-        id: userId
+      const billingUrl = absoluteUrl('/dashboard/billing')
+      console.log(billingUrl)
+      if (!userId)
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+
+      const dbUser = await db.user.findFirst({
+        where: {
+          id: userId,
+        },
+      })
+
+      if (!dbUser)
+        throw new TRPCError({ code: 'UNAUTHORIZED' })
+
+      const subscriptionPlan =
+        await getUserSubscriptionPlan()
+
+      if (
+        subscriptionPlan.isSubscribed &&
+        dbUser.stripeCustomerId
+      ) {
+        const stripeSession =
+          await stripe.billingPortal.sessions.create({
+            customer: dbUser.stripeCustomerId,
+            return_url: billingUrl,
+          })
+
+        return { url: stripeSession.url }
       }
-    })
-    if(!dbUser) throw new TRPCError({code:'UNAUTHORIZED'})
-    const subscribtionPlan = await getUserSubscriptionPlan()
-  if(subscribtionPlan.isSubscribed && dbUser.stripeCustomerId){
-    const stripeSession = await stripe.billingPortal.sessions.create({
-      customer: dbUser.stripeCustomerId,
-      return_url: billingUrl
-    })
-    return {
-      url: stripeSession.url
-    }
-  }
-  const stripeSession =
+
+      const stripeSession =
         await stripe.checkout.sessions.create({
           success_url: billingUrl,
           cancel_url: billingUrl,
@@ -174,7 +187,8 @@ export const appRouter = router({
         })
 
       return { url: stripeSession.url }
-  })
+    }
+  ),
 });
  
 // Export type router type signature,
