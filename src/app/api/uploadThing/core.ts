@@ -89,4 +89,4 @@ export const ourFileRouter = {
    
 } satisfies FileRouter;
  
-export type OurFileRouterType = typeof ourFileRouter;
+export type OurFileRouter = typeof ourFileRouter;
