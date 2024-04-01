@@ -13,12 +13,12 @@ import { useToast } from "./ui/use-toast";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 
-const UploadZone = () => {
+const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
     const router = useRouter()
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
     const { toast } = useToast();
-    const { startUpload } = useUploadThing('pdfUploader')
+    const { startUpload } = useUploadThing(isSubscribed ? 'proPlanUploader' : 'freePlanUploader')
     const { mutate: startPolling } = trpc.getFile.useMutation({
         onSuccess: (file) => {
             router.push(`/dashboard/${file.id}`)
@@ -76,7 +76,7 @@ const UploadZone = () => {
                             <p className="mb-2 text-sm text-zinc-700">
                                 <span className="font-semibold">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-sm text-zinc-500">PDF (up to 4MB)</p>
+                            <p className="text-sm text-zinc-500">PDF (up to {isSubscribed ? '16' : '4'}MB)</p>
                         </div>
                         {acceptedFiles && acceptedFiles[0] && (
                             <div className="max-w-xs bg-white flex items-center rounded-md overflow-hidden outline outline-[1px] outline-zinc-200 divide-x divide-zinc-200">
@@ -108,13 +108,13 @@ const UploadZone = () => {
         )}
     </DropZone>)
 }
-const UploadButton = () => {
+const UploadButton = ({ isSubscribed }: { isSubscribed: boolean }) => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     return (
         <Dialog open={isOpen} onOpenChange={(v) => { !v && setIsOpen(v) }}>
             <DialogTrigger onClick={() => setIsOpen(true)} asChild><Button> Upload PDF</Button></DialogTrigger>
             <DialogContent>
-                <UploadZone />
+                <UploadZone isSubscribed={isSubscribed} />
 
             </DialogContent>
         </Dialog>
