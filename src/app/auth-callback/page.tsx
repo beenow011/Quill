@@ -1,30 +1,37 @@
-"use client"
-
-import { useRouter, useSearchParams } from 'next/navigation'
-import { trpc } from '../_trpc/client'
-import { Loader2 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+// import { trpc } from '../_trpc/client';
+import { Loader2 } from 'lucide-react';
+import { trpc } from '../_trpc/client';
 
 const Page = () => {
-    const router = useRouter()
+    const router = useRouter();
 
-    const searchParams = useSearchParams()
-    const origin = searchParams.get('origin')
+    useEffect(() => {
+        const fetchData = async () => {
+            const searchParams = new URLSearchParams(window.location.search);
+            const origin = searchParams.get('origin');
 
-    trpc.authCallback.useQuery(undefined, {
-        onSuccess: ({ success }) => {
-            if (success) {
-                // user is synced to db
-                router.push(origin ? `/${origin}` : '/dashboard')
-            }
-        },
-        onError: (err) => {
-            if (err.data?.code === 'UNAUTHORIZED') {
-                router.push('/sign-in')
-            }
-        },
-        retry: true,
-        retryDelay: 500,
-    })
+            trpc.authCallback.useQuery(undefined, {
+                onSuccess: ({ success }) => {
+                    if (success) {
+                        // user is synced to db
+                        router.push(origin ? `/${origin}` : '/dashboard')
+                    }
+                },
+                onError: (err) => {
+                    if (err.data?.code === 'UNAUTHORIZED') {
+                        router.push('/sign-in')
+                    }
+                },
+                retry: true,
+                retryDelay: 500,
+            })
+
+        };
+
+        fetchData();
+    }, [router]);
 
     return (
         <div className='w-full mt-24 flex justify-center'>
@@ -36,7 +43,7 @@ const Page = () => {
                 <p>You will be redirected automatically.</p>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default Page
+export default Page;
