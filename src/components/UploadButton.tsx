@@ -23,6 +23,9 @@ const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
         onSuccess: (file) => {
             router.push(`/dashboard/${file.id}`)
         },
+        onError: () => {
+            router.push(`/dashboard`)
+        },
         retry: true,
         retryDelay: 500
     })
