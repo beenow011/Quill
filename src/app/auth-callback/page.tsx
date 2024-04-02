@@ -7,14 +7,11 @@ import { Loader2 } from 'lucide-react';
 import { trpc } from '../_trpc/client';
 
 const Page = () => {
-
-    function SearchBarFallback() {
-        return <>placeholder</>
-    }
     const router = useRouter()
 
-
+    // Wrap useSearchParams in Suspense
     const searchParams = useSearchParams()
+
     const origin = searchParams.get('origin')
 
     const query = trpc.authCallback.useQuery(undefined, {
@@ -38,27 +35,24 @@ const Page = () => {
         router.push(origin ? `/${origin}` : '/dashboard');
     }
 
-
-
-
-
-
-
-
-
     return (
         <div className='w-full mt-24 flex justify-center'>
-            <Suspense fallback={<SearchBarFallback />}>
-                <div className='flex flex-col items-center gap-2'>
-                    <Loader2 className='h-8 w-8 animate-spin text-zinc-800' />
-                    <h3 className='font-semibold text-xl'>
-                        Setting up your account...
-                    </h3>
-                    <p>You will be redirected automatically.</p>
-                </div>
-            </Suspense>
+            <div className='flex flex-col items-center gap-2'>
+                <Loader2 className='h-8 w-8 animate-spin text-zinc-800' />
+                <h3 className='font-semibold text-xl'>
+                    Setting up your account...
+                </h3>
+                <p>You will be redirected automatically.</p>
+            </div>
         </div>
     );
 };
 
-export default Page;
+// Wrap the Page component with Suspense
+const SuspenseWrapper = () => (
+    <Suspense fallback={<div>Loading...</div>}>
+        <Page />
+    </Suspense>
+);
+
+export default SuspenseWrapper;
