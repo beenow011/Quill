@@ -8,10 +8,12 @@ import { Button } from "./ui/button";
 import DropZone from 'react-dropzone'
 import { Cloud, File, Loader2 } from "lucide-react";
 import { Progress } from "./ui/progress";
-import { useUploadThing } from "@/lib/uploadThing";
+// import { useUploadThing } from "@/lib/uploadThing";
 import { useToast } from "./ui/use-toast";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
+import { Upload } from "@/lib/uploadThing";
+
 
 const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
 
