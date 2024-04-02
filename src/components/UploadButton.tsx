@@ -14,6 +14,8 @@ import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
 
 const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
+
+
     const router = useRouter()
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
