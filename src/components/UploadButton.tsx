@@ -8,10 +8,12 @@ import { Button } from "./ui/button";
 import DropZone from 'react-dropzone'
 import { Cloud, File, Loader2 } from "lucide-react";
 import { Progress } from "./ui/progress";
-import { useUploadThing } from "@/utils/uploadthing";
+// import { useUploadThing } from "@/utils/uploadthing";
 import { useToast } from "./ui/use-toast";
 import { trpc } from "@/app/_trpc/client";
 import { useRouter } from "next/navigation";
+import { useEdgeStore } from "@/lib/edgestore";
+import { v4 as uuid } from 'uuid'
 // import { Upload } from "@/lib/uploadThing";
 
 
@@ -22,8 +24,11 @@ const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
     const router = useRouter()
     const [isUploading, setIsUploading] = useState(false)
     const [uploadProgress, setUploadProgress] = useState(0)
+    const [key, setKey] = useState<string | undefined>()
     const { toast } = useToast();
-    const { startUpload } = useUploadThing(isSubscribed ? 'proPlanUploader' : 'freePlanUploader')
+    // const { startUpload } = useUploadThing(isSubscribed ? 'proPlanUploader' : 'freePlanUploader')
+    const { edgestore } = useEdgeStore();
+    const { mutate: uploadToEdge } = trpc.uploadToEdgerStore.useMutation()
     const { mutate: startPolling } = trpc.getFile.useMutation({
         onSuccess: (file) => {
             router.push(`/dashboard/${file.id}`)
@@ -52,9 +57,22 @@ const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
     return (
         <DropZone multiple={false} onDrop={async (acceptedFiles) => {
             setIsUploading(true)
+            const id = uuid()
+            setKey(id)
             const progressInterval = startSimulatedProgress()
+            // console.log(acceptedFiles)
+            const res = await edgestore.publicFiles.upload({
+                file: acceptedFiles[0],
+                onProgressChange: (progress) => {
+                    // you can use this to show a progress bar
+                    if (progress === 100) {
+                        clearInterval(progressInterval)
+                    }
+                    // console.log(progress);
+                },
 
-            const res = await startUpload(acceptedFiles)
+            });
+            // console.log(res)
             if (!res) {
                 return toast({
                     title: "Something went wrong",
@@ -62,19 +80,21 @@ const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
                     variant: "destructive"
                 })
             }
-            const [fileResponse] = res;
-            const key = fileResponse?.key
-            if (!key) {
-                return toast({
-                    title: "Something went wrong",
-                    description: "Please try again",
-                    variant: "destructive"
-                })
-            }
+            uploadToEdge({ url: res.url, key: id, name: acceptedFiles[0].name })
 
-            clearInterval(progressInterval)
+            // const [fileResponse] = res;
+            // const key = fileResponse?.key
+            // if (!key) {
+            //     return toast({
+            //         title: "Something went wrong",
+            //         description: "Please try again",
+            //         variant: "destructive"
+            //     })
+            // }
+
+            // 
             setUploadProgress(100)
-            startPolling({ key })
+            startPolling({ url: res.url })
         }}>
             {({ getRootProps, getInputProps, acceptedFiles }) => (
                 <div {...getRootProps()} className="border h-64 m-4 border-dashed border-gray-300 rounded-lg">

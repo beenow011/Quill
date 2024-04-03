@@ -7,6 +7,10 @@ import { INFINITE_QUERY_LIMIT } from '@/config/infinite-query';
 import { absoluteUrl } from '@/lib/utils';
 import { getUserSubscriptionPlan, stripe } from '@/lib/stripe';
 import { Plans } from '@/config/stripe';
+import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
+import { getPineconeClient } from '@/lib/pinecone';
+import { OpenAIEmbeddings } from '@langchain/openai';
+import { PineconeStore } from '@langchain/pinecone';
 // import { CarTaxiFront } from 'lucide-react';
 export const appRouter = router({
   authCallback : publicProcedure.query(async()=>{
@@ -31,6 +35,97 @@ export const appRouter = router({
     }
     return {success: true}
   }) ,
+  uploadToEdgerStore: privateProcedure.input(z.object({url:z.string() , key: z.string() , name:z.string()})).mutation(async({ctx,input})=>{
+    const {url,name,key} = input
+    const {getUser} = getKindeServerSession()
+    const user =await getUser()
+    if(!user?.id || !user.email) throw new TRPCError({code:'UNAUTHORIZED'})
+
+    const isFileExist = await db.file.findFirst({
+      where:{
+        key: key
+      }
+    })
+    if(isFileExist)
+      return false
+    
+    const createdFile = await db.file.create({
+      data:{
+        key: key,
+        name: name,
+        userId: user.id,
+        url: url,
+        uploadStatus:'PROCESSING'
+      }
+    })
+   
+    try{
+      const response = await fetch(url)
+      const blob = await response.blob()
+  
+      const loader = new PDFLoader(blob)
+  
+      const pageLevelDocs = await loader.load()
+      const pagesAmt = pageLevelDocs.length
+      // const {subscriptionPlan} = metadata
+      // const {isSubscribed} = subscriptionPlan
+  
+      // const isProExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Pro')!.pagesPerPdf
+      // const isFreeExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Free')!.pagesPerPdf
+      // if((isSubscribed && isProExceeded) || (!isSubscribed && isFreeExceeded)){
+      //   await db.file.update({
+      //     data:{
+      //       uploadStatus:"FAILED",
+      //     },
+      //     where:{
+      //       id:createdFile.id
+      //     }
+      //   })
+      // }
+      // console.log(1)
+      const pinecone = await getPineconeClient();
+      const pineconeIndex = pinecone.Index('quill'); // Use a single index name
+  
+      // Add a 'dataset' field to the data to distinguish the source
+      const combinedData = pageLevelDocs.map((document) => {
+        return {
+          ...document,
+          metadata: {
+            fileId: createdFile.id,
+          },
+          dataset: 'pdf', // Use a field to indicate the source dataset (e.g., 'pdf')
+        };
+      });
+      
+      const embeddings = new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
+  
+      await PineconeStore.fromDocuments(combinedData, embeddings, {
+        //@ts-ignore
+        pineconeIndex,
+      });
+  
+      await db.file.update({
+        data:{
+          uploadStatus:"SUCCESS"
+        },
+        where:{
+          id:createdFile.id
+        }
+      })
+      return true
+    }catch(err){
+      console.log(err)
+      await db.file.update({
+        data:{
+          uploadStatus:"FAILED"
+        },
+        where:{
+          id:createdFile.id
+        }
+      })
+      return false
+    }
+  }),
   getUserFiles: privateProcedure.query(async({ctx})=>{
     const {userId } = ctx
 
@@ -60,11 +155,11 @@ export const appRouter = router({
   })
   return file
   }),
-  getFile: privateProcedure.input(z.object({key: z.string()})).mutation(async({ctx,input})=>{
+  getFile: privateProcedure.input(z.object({url: z.string()})).mutation(async({ctx,input})=>{
     const {userId} = ctx
     const file = await db.file.findFirst({
       where:{
-        key:input.key,
+        url:input.url,
         userId,
       }
     })
