@@ -1,3 +1,4 @@
+'use client';
 import { LoginLink, LogoutLink, RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components'
 import { ArrowRight, Menu } from 'lucide-react'
 import Link from 'next/link'
