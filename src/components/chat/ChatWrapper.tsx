@@ -77,7 +77,7 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
           <div className='flex flex-col items-center gap-2'>
             <XCircle className='h-8 w-8 text-red-500 ' />
             <h3 className='font-semibold text-xl'>
-              Too many pages in PDF
+              Too many pages in PDF or Your free quota has been ended.
             </h3>
             <p className='text-zinc-500 text-sm'>
               Your <span>Free</span> plan supports up to 5 pages per PDF.

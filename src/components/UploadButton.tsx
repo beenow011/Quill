@@ -80,7 +80,7 @@ const UploadZone = ({ isSubscribed }: { isSubscribed: boolean }) => {
                     variant: "destructive"
                 })
             }
-            uploadToEdge({ url: res.url, key: id, name: acceptedFiles[0].name })
+            uploadToEdge({ url: res.url, key: id, name: acceptedFiles[0].name, isSubscribed })
 
             // const [fileResponse] = res;
             // const key = fileResponse?.key

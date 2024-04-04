@@ -35,8 +35,8 @@ export const appRouter = router({
     }
     return {success: true}
   }) ,
-  uploadToEdgerStore: privateProcedure.input(z.object({url:z.string() , key: z.string() , name:z.string()})).mutation(async({ctx,input})=>{
-    const {url,name,key} = input
+  uploadToEdgerStore: privateProcedure.input(z.object({url:z.string() , key: z.string() , name:z.string() , isSubscribed: z.boolean()})).mutation(async({ctx,input})=>{
+    const {url,name,key  , isSubscribed} = input
     const {getUser} = getKindeServerSession()
     const user =await getUser()
     if(!user?.id || !user.email) throw new TRPCError({code:'UNAUTHORIZED'})
@@ -48,7 +48,13 @@ export const appRouter = router({
     })
     if(isFileExist)
       return false
-    
+    const userDb = await db.user.findFirst({
+      where:{
+        id:user.id
+      }
+    })
+    // const {freeQuota} = userDb
+
     const createdFile = await db.file.create({
       data:{
         key: key,
@@ -58,7 +64,30 @@ export const appRouter = router({
         uploadStatus:'PROCESSING'
       }
     })
-   
+    if(!isSubscribed && userDb!.freeQuota <=0){
+      await db.file.update({
+        data:{
+          uploadStatus:"FAILED"
+        },
+        where:{
+          id:createdFile.id
+        }
+      })
+      return false
+    }
+    console.log(isSubscribed)
+    console.log(userDb)
+
+    if(!isSubscribed){
+      await db.user.update({
+        where:{
+          id:user.id
+        },
+        data:{
+          freeQuota: userDb!.freeQuota-1
+        }
+      })
+    }
     try{
       const response = await fetch(url)
       const blob = await response.blob()
@@ -70,18 +99,19 @@ export const appRouter = router({
       // const {subscriptionPlan} = metadata
       // const {isSubscribed} = subscriptionPlan
   
-      // const isProExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Pro')!.pagesPerPdf
-      // const isFreeExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Free')!.pagesPerPdf
-      // if((isSubscribed && isProExceeded) || (!isSubscribed && isFreeExceeded)){
-      //   await db.file.update({
-      //     data:{
-      //       uploadStatus:"FAILED",
-      //     },
-      //     where:{
-      //       id:createdFile.id
-      //     }
-      //   })
-      // }
+      const isProExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Pro')!.pagesPerPdf
+      const isFreeExceeded = pagesAmt > Plans.find(plan=> plan.name === 'Free')!.pagesPerPdf
+      if((isSubscribed && isProExceeded) || (!isSubscribed && isFreeExceeded)){
+        await db.file.update({
+          data:{
+            uploadStatus:"FAILED",
+          },
+          where:{
+            id:createdFile.id
+          }
+        })
+        return false
+      }
       // console.log(1)
       const pinecone = await getPineconeClient();
       const pineconeIndex = pinecone.Index('quill'); // Use a single index name

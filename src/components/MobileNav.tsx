@@ -14,7 +14,7 @@ const MobileNav = ({ isAuth }: { isAuth: boolean }) => {
 
     useEffect(() => {
         if (isOpen) toggleOpen()
-    }, [isOpen, pathname]) // Include isOpen in the dependency array
+    }, [pathname]) // Include isOpen in the dependency array
 
     const closeOnCurrent = (href: string) => {
         if (pathname === href) {
