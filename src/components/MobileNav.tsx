@@ -1,5 +1,3 @@
-'use client'
-
 import { LoginLink, LogoutLink, RegisterLink } from '@kinde-oss/kinde-auth-nextjs/components'
 import { ArrowRight, Menu } from 'lucide-react'
 import Link from 'next/link'
@@ -15,7 +13,7 @@ const MobileNav = ({ isAuth }: { isAuth: boolean }) => {
 
     useEffect(() => {
         if (isOpen) toggleOpen()
-    }, [pathname])
+    }, [isOpen, pathname]) // Include isOpen in the dependency array
 
     const closeOnCurrent = (href: string) => {
         if (pathname === href) {

@@ -252,13 +252,23 @@ export const appRouter = router({
         subscriptionPlan.isSubscribed &&
         dbUser.stripeCustomerId
       ) {
-        const stripeSession =
+        
+
+        
+        try {
+          const stripeSession =
           await stripe.billingPortal.sessions.create({
             customer: dbUser.stripeCustomerId,
             return_url: billingUrl,
           })
+          if (stripeSession) {
+            return { url: stripeSession.url }
 
-        return { url: stripeSession.url }
+            
+          }
+        } catch (error) {
+          console.log(error)
+        }
       }
 
       const stripeSession =
