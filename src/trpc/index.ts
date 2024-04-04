@@ -252,9 +252,6 @@ export const appRouter = router({
         subscriptionPlan.isSubscribed &&
         dbUser.stripeCustomerId
       ) {
-        
-
-        
         try {
           const stripeSession =
           await stripe.billingPortal.sessions.create({
@@ -268,6 +265,8 @@ export const appRouter = router({
           }
         } catch (error) {
           console.log(error)
+          throw new TRPCError({ code: 'BAD_REQUEST' })
+
         }
       }
 
