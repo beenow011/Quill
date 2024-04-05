@@ -11,8 +11,10 @@ import { useState } from "react";
 import { getUserSubscriptionPlan } from "@/lib/stripe";
 interface pageProps {
     subscriptionPlan: Awaited<ReturnType<typeof getUserSubscriptionPlan>>
+
+    freequota: number
 }
-const Dashboard = ({ subscriptionPlan }: pageProps) => {
+const Dashboard = ({ subscriptionPlan, freequota }: pageProps) => {
     const [deleteLoader, setDeleteLoader] = useState<string | null>(null)
     const utils = trpc.useContext()
     const { data: files, isLoading } = trpc.getUserFiles.useQuery()
@@ -33,7 +35,16 @@ const Dashboard = ({ subscriptionPlan }: pageProps) => {
         <main className="mx-auto max-w-7xl md:p-10">
             <div className="mt-8 flex flex-col items-start justify-between gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:gap-0">
                 <h1 className="mb-3 font-bold text-3xl text-gray-900">My Files</h1>
-                <UploadButton isSubscribed={subscriptionPlan.isSubscribed} />
+                {
+                    !subscriptionPlan.isSubscribed ? (<div className="flex gap-6">
+
+                        <div className="bg-white p-3 shadow-inner rounded-md border border-zinc-400 shadow-black/30 ">
+                            Freequota : <span className="text-blue-600 font-semibold">{freequota}</span>
+                        </div>
+                        <UploadButton isSubscribed={subscriptionPlan.isSubscribed} />
+                    </div>) : (<UploadButton isSubscribed={subscriptionPlan.isSubscribed} />)
+                }
+
             </div>
             {files && files?.length !== 0 ? (
                 <ul className="mt-8 grid grid-cols-1 gap-6 divide-y divide-zinc-200 md:grid-cols-2 lg:grid-cols-3">

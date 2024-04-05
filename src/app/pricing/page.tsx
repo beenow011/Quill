@@ -27,8 +27,8 @@ const Page = async () => {
                     footnote: "The maximum amount of pages per PDF-file.",
                 },
                 {
-                    text: "4MB file size limit",
-                    footnote: "The maximum file size of a single PDF file.",
+                    text: "Chat with 10 PDFs",
+                    footnote: "Maximum PDFs that can be uploaded is 10.",
                 },
                 {
                     text: "Mobile-friendly interface",
@@ -54,8 +54,8 @@ const Page = async () => {
                     footnote: "The maximum amount of pages per PDF-file.",
                 },
                 {
-                    text: "16MB file size limit",
-                    footnote: "The maximum file size of a single PDF file.",
+                    text: "No restrictions in number of PDFs",
+                    footnote: "You can upload as many PDFs as you need, without any limitations.",
                 },
                 {
                     text: "Mobile-friendly interface",
