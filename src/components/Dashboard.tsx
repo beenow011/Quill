@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { getUserSubscriptionPlan } from "@/lib/stripe";
+import { usePathname } from "next/navigation";
 interface pageProps {
     subscriptionPlan: Awaited<ReturnType<typeof getUserSubscriptionPlan>>
 
@@ -16,8 +17,11 @@ interface pageProps {
 }
 const Dashboard = ({ subscriptionPlan, freequota }: pageProps) => {
     const [deleteLoader, setDeleteLoader] = useState<string | null>(null)
+    const [freeQuota, setFreeQuota] = useState<number | undefined>()
     const utils = trpc.useContext()
     const { data: files, isLoading } = trpc.getUserFiles.useQuery()
+    const pathname = usePathname();
+
     const { mutate: deleteFile } = trpc.deleteFile.useMutation({
         onSuccess: () => {
             utils.getUserFiles.invalidate()
@@ -38,7 +42,7 @@ const Dashboard = ({ subscriptionPlan, freequota }: pageProps) => {
                 {
                     !subscriptionPlan.isSubscribed ? (<div className="flex gap-6">
 
-                        <div className="bg-white p-3 shadow-inner rounded-md border border-zinc-400 shadow-black/30 ">
+                        <div className="bg-white p-2 shadow-inner rounded-md border border-zinc-400 shadow-black/20 ">
                             Freequota : <span className="text-blue-600 font-semibold">{freequota}</span>
                         </div>
                         <UploadButton isSubscribed={subscriptionPlan.isSubscribed} />
